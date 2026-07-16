@@ -50,6 +50,14 @@ jobs:
       - name: Install Databricks CLI
         uses: databricks/setup-cli@main
 
+      - name: Check Databricks secrets are configured
+        shell: bash
+        run: |
+          if [ -z "$DATABRICKS_HOST" ] || [ -z "$DATABRICKS_TOKEN" ]; then
+            echo "DATABRICKS_HOST and DATABRICKS_TOKEN must be configured as GitHub repository secrets."
+            exit 1
+          fi
+
       - name: Validate Databricks authentication
         run: databricks current-user me
 
