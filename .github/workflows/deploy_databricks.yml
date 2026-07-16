@@ -22,6 +22,7 @@ jobs:
     environment: databricks
 
     env:
+      DATABRICKS_AUTH_TYPE: pat
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
       DATABRICKS_WORKSPACE_ROOT: ${{ vars.DATABRICKS_WORKSPACE_ROOT || '/Users/shailus2002@gmail.com/retail-lakehouse-files' }}
@@ -57,6 +58,8 @@ jobs:
             echo "DATABRICKS_HOST and DATABRICKS_TOKEN must be configured as GitHub repository secrets."
             exit 1
           fi
+          echo "Using Databricks host: $DATABRICKS_HOST"
+          echo "Databricks token length: ${#DATABRICKS_TOKEN}"
 
       - name: Validate Databricks authentication
         run: databricks current-user me
