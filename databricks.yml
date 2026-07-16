@@ -1,0 +1,103 @@
+bundle:
+  name: databricks-retail-lakehouse
+
+variables:
+  spark_version:
+    description: Databricks Runtime version for the demo job cluster.
+    default: 15.4.x-scala2.12
+  node_type_id:
+    description: Small single-node cluster type. Change if unavailable in the workspace.
+    default: i3.xlarge
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://dbc-3b1c4d0c-4934.cloud.databricks.com
+      root_path: /Users/shailus2002@gmail.com/.bundle/${bundle.name}/${bundle.target}
+
+resources:
+  jobs:
+    retail_lakehouse_daily:
+      name: retail-lakehouse-daily
+      max_concurrent_runs: 1
+      job_clusters:
+        - job_cluster_key: retail_lakehouse_single_node
+          new_cluster:
+            spark_version: ${var.spark_version}
+            node_type_id: ${var.node_type_id}
+            num_workers: 0
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+              spark.master: local[*]
+            custom_tags:
+              ResourceClass: SingleNode
+      tasks:
+        - task_key: daily_pipeline
+          job_cluster_key: retail_lakehouse_single_node
+          spark_python_task:
+            python_file: src/orchestration/run_daily.py
+            parameters:
+              - --date
+              - "2010-12-01"
+              - --limit
+              - "1000"
+              - --config
+              - config/databricks.yml
+              - --run-prefix
+              - databricks-daily-demo
+          libraries:
+            - pypi:
+                package: pandas>=2.2.0
+            - pypi:
+                package: openpyxl>=3.1.0
+            - pypi:
+                package: pyyaml>=6.0.0
+
+    retail_lakehouse_backfill:
+      name: retail-lakehouse-backfill
+      max_concurrent_runs: 1
+      parameters:
+        - name: start_date
+          default: "2010-12-01"
+        - name: end_date
+          default: "2010-12-03"
+        - name: limit_per_day
+          default: "1000"
+        - name: run_prefix
+          default: databricks-backfill-demo
+      job_clusters:
+        - job_cluster_key: retail_lakehouse_single_node
+          new_cluster:
+            spark_version: ${var.spark_version}
+            node_type_id: ${var.node_type_id}
+            num_workers: 0
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+              spark.master: local[*]
+            custom_tags:
+              ResourceClass: SingleNode
+      tasks:
+        - task_key: backfill_pipeline
+          job_cluster_key: retail_lakehouse_single_node
+          spark_python_task:
+            python_file: src/orchestration/backfill.py
+            parameters:
+              - --start-date
+              - "{{job.parameters.start_date}}"
+              - --end-date
+              - "{{job.parameters.end_date}}"
+              - --limit-per-day
+              - "{{job.parameters.limit_per_day}}"
+              - --config
+              - config/databricks.yml
+              - --run-prefix
+              - "{{job.parameters.run_prefix}}"
+          libraries:
+            - pypi:
+                package: pandas>=2.2.0
+            - pypi:
+                package: openpyxl>=3.1.0
+            - pypi:
+                package: pyyaml>=6.0.0

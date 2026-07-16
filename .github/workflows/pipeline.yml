@@ -1,0 +1,100 @@
+name: Retail Lakehouse Pipeline
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      run_date:
+        description: "UCI Online Retail business date to process"
+        required: true
+        default: "2010-12-01"
+      limit:
+        description: "Maximum public rows to emit"
+        required: true
+        default: "1000"
+      run_spark:
+        description: "Run Bronze/Silver/DQ/Gold Spark steps"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  pipeline:
+    name: Generate landing data and optionally run lakehouse steps
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-ci.txt
+
+      - name: Install lightweight dependencies
+        run: python -m pip install -r requirements-ci.txt
+
+      - name: Resolve run parameters
+        id: params
+        shell: bash
+        run: |
+          RUN_DATE="${{ inputs.run_date }}"
+          LIMIT="${{ inputs.limit }}"
+          if [ -z "$RUN_DATE" ]; then RUN_DATE="2010-12-01"; fi
+          if [ -z "$LIMIT" ]; then LIMIT="1000"; fi
+          echo "run_date=$RUN_DATE" >> "$GITHUB_OUTPUT"
+          echo "limit=$LIMIT" >> "$GITHUB_OUTPUT"
+          echo "batch_id=gha-${RUN_DATE}" >> "$GITHUB_OUTPUT"
+
+      - name: Run unit and contract tests
+        run: python -m pytest
+
+      - name: Download public dataset
+        run: python -m src.ingest.download_public_dataset
+
+      - name: Generate landing JSON
+        run: >
+          python -m src.ingest.generate_public_orders
+          --date "${{ steps.params.outputs.run_date }}"
+          --limit "${{ steps.params.outputs.limit }}"
+          --batch-id "${{ steps.params.outputs.batch_id }}"
+
+      - name: Upload landing artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: landing-${{ steps.params.outputs.run_date }}
+          path: data/landing/orders/event_date=${{ steps.params.outputs.run_date }}/
+
+      - name: Install Spark dependencies
+        if: ${{ inputs.run_spark == true }}
+        run: python -m pip install -r requirements.txt
+
+      - name: Run Bronze ingestion
+        if: ${{ inputs.run_spark == true }}
+        run: python -m src.ingest.bronze_orders --batch-id "bronze-${{ steps.params.outputs.batch_id }}"
+
+      - name: Run Silver merge
+        if: ${{ inputs.run_spark == true }}
+        run: python -m src.transform.silver_orders --run-id "silver-${{ steps.params.outputs.batch_id }}"
+
+      - name: Run data quality checks
+        if: ${{ inputs.run_spark == true }}
+        run: python -m src.quality.run_quality_checks --run-id "dq-${{ steps.params.outputs.batch_id }}"
+
+      - name: Build Gold tables
+        if: ${{ inputs.run_spark == true }}
+        run: python -m src.transform.gold_aggregates --run-id "gold-${{ steps.params.outputs.batch_id }}"
+
+      - name: Upload local Delta artifacts
+        if: ${{ inputs.run_spark == true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: delta-${{ steps.params.outputs.run_date }}
+          path: data/delta/

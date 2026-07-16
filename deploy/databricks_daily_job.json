@@ -1,0 +1,42 @@
+{
+  "name": "retail-lakehouse-daily",
+  "max_concurrent_runs": 1,
+  "job_clusters": [
+    {
+      "job_cluster_key": "retail_lakehouse_single_node",
+      "new_cluster": {
+        "spark_version": "15.4.x-scala2.12",
+        "node_type_id": "i3.xlarge",
+        "num_workers": 0,
+        "spark_conf": {
+          "spark.databricks.cluster.profile": "singleNode",
+          "spark.master": "local[*]"
+        },
+        "custom_tags": {
+          "ResourceClass": "SingleNode"
+        }
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "task_key": "daily_pipeline",
+      "job_cluster_key": "retail_lakehouse_single_node",
+      "spark_python_task": {
+        "python_file": "/Workspace/Users/shailus2002@gmail.com/retail-lakehouse-files/databricks/run_daily_databricks.py",
+        "source": "WORKSPACE",
+        "parameters": [
+          "--date", "2010-12-01",
+          "--limit", "1000",
+          "--config", "/Workspace/Users/shailus2002@gmail.com/retail-lakehouse-files/config/databricks.yml",
+          "--run-prefix", "databricks-daily-demo"
+        ]
+      },
+      "libraries": [
+        {"pypi": {"package": "pandas>=2.2.0"}},
+        {"pypi": {"package": "openpyxl>=3.1.0"}},
+        {"pypi": {"package": "pyyaml>=6.0.0"}}
+      ]
+    }
+  ]
+}

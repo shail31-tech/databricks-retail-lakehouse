@@ -1,0 +1,26 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+
+# Local generated data
+data/**/*.json
+data/**/*.jsonl
+data/**/*.parquet
+data/**/*.csv
+data/**/*.xlsx
+data/**/*.zip
+data/**/*.delta
+data/**/_delta_log/
+
+# Databricks / local runtime artifacts
+.databricks/
+spark-warehouse/
+metastore_db/
+derby.log
+
+# Dashboard artifacts
+.streamlit/secrets.toml

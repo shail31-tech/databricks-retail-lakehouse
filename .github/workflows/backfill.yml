@@ -1,0 +1,110 @@
+name: Backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "First UCI Online Retail business date"
+        required: true
+        default: "2010-12-01"
+      end_date:
+        description: "Last UCI Online Retail business date"
+        required: true
+        default: "2010-12-03"
+      limit_per_day:
+        description: "Maximum public rows to emit per date"
+        required: true
+        default: "1000"
+      run_prefix:
+        description: "Deterministic run prefix"
+        required: true
+        default: "gha-backfill"
+      run_spark:
+        description: "Run full Spark/Delta backfill instead of landing-only validation"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  backfill:
+    name: Backfill date range
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-ci.txt
+
+      - name: Install lightweight dependencies
+        run: python -m pip install -r requirements-ci.txt
+
+      - name: Run unit and contract tests
+        run: python -m pytest
+
+      - name: Download public dataset
+        run: python -m src.ingest.download_public_dataset
+
+      - name: Generate landing files for date range
+        if: ${{ inputs.run_spark != true }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          from datetime import date
+          from src.common.config import load_config
+          from src.ingest.generate_public_orders import write_public_order_events
+          from src.orchestration.backfill import iter_dates, build_run_id
+
+          config = load_config("config/pipeline.yml")
+          start = date.fromisoformat("${{ inputs.start_date }}")
+          end = date.fromisoformat("${{ inputs.end_date }}")
+          limit = int("${{ inputs.limit_per_day }}")
+          prefix = "${{ inputs.run_prefix }}"
+          source = config.source_path / config.dataset_excel_file
+
+          for run_date in iter_dates(start, end):
+              batch_id = build_run_id(prefix, "landing", run_date)
+              path = write_public_order_events(
+                  event_date=run_date,
+                  source_excel_path=source,
+                  landing_root=config.landing_path,
+                  limit=limit,
+                  batch_id=batch_id,
+                  include_edge_cases=True,
+              )
+              print(path)
+          PY
+
+      - name: Install Spark dependencies
+        if: ${{ inputs.run_spark == true }}
+        run: python -m pip install -r requirements.txt
+
+      - name: Run full backfill
+        if: ${{ inputs.run_spark == true }}
+        run: >
+          python -m src.orchestration.backfill
+          --start-date "${{ inputs.start_date }}"
+          --end-date "${{ inputs.end_date }}"
+          --limit-per-day "${{ inputs.limit_per_day }}"
+          --run-prefix "${{ inputs.run_prefix }}"
+
+      - name: Upload landing artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backfill-landing-${{ inputs.start_date }}-to-${{ inputs.end_date }}
+          path: data/landing/orders/
+
+      - name: Upload local Delta artifacts
+        if: ${{ inputs.run_spark == true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: backfill-delta-${{ inputs.start_date }}-to-${{ inputs.end_date }}
+          path: data/delta/
