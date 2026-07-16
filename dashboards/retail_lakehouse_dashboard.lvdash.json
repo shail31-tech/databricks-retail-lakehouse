@@ -1,0 +1,529 @@
+{
+  "datasets": [
+    {
+      "name": "kpis",
+      "displayName": "Executive KPIs",
+      "queryLines": [
+        "select\n",
+        "  cast(sum(net_revenue) as double) as net_revenue,\n",
+        "  sum(net_units) as net_units,\n",
+        "  sum(invoice_count) as invoice_count,\n",
+        "  max(customer_count) as customer_count,\n",
+        "  sum(line_count) as line_count\n",
+        "from workspace.gold.daily_sales\n"
+      ]
+    },
+    {
+      "name": "daily_sales",
+      "displayName": "Daily Sales",
+      "queryLines": [
+        "select\n",
+        "  event_date,\n",
+        "  cast(net_revenue as double) as net_revenue,\n",
+        "  net_units,\n",
+        "  invoice_count,\n",
+        "  customer_count,\n",
+        "  cancellation_lines\n",
+        "from workspace.gold.daily_sales\n",
+        "order by event_date\n"
+      ]
+    },
+    {
+      "name": "country_revenue",
+      "displayName": "Revenue by Country",
+      "queryLines": [
+        "select\n",
+        "  country,\n",
+        "  cast(net_revenue as double) as net_revenue,\n",
+        "  line_count,\n",
+        "  invoice_count,\n",
+        "  customer_count\n",
+        "from workspace.gold.country_revenue\n",
+        "order by net_revenue desc\n"
+      ]
+    },
+    {
+      "name": "top_products",
+      "displayName": "Top Products",
+      "queryLines": [
+        "select\n",
+        "  product_name,\n",
+        "  product_id,\n",
+        "  cast(net_revenue as double) as net_revenue,\n",
+        "  net_units,\n",
+        "  invoice_count,\n",
+        "  line_count\n",
+        "from workspace.gold.product_performance\n",
+        "order by net_revenue desc\n",
+        "limit 15\n"
+      ]
+    },
+    {
+      "name": "order_status",
+      "displayName": "Order Status",
+      "queryLines": [
+        "select\n",
+        "  order_status,\n",
+        "  cast(net_revenue as double) as net_revenue,\n",
+        "  net_units,\n",
+        "  invoice_count,\n",
+        "  line_count\n",
+        "from workspace.gold.order_status_summary\n",
+        "order by net_revenue desc\n"
+      ]
+    },
+    {
+      "name": "pipeline_health",
+      "displayName": "Pipeline Health",
+      "queryLines": [
+        "select\n",
+        "  pipeline_step,\n",
+        "  last_status,\n",
+        "  last_run_at,\n",
+        "  case when last_status = 'success' then 1 else 0 end as success_flag\n",
+        "from workspace.gold.pipeline_health\n",
+        "order by pipeline_step\n"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "retail_lakehouse",
+      "displayName": "Retail Lakehouse",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {
+            "name": "dashboard_title",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# Retail Lakehouse Dashboard\n",
+                "Gold-layer metrics generated from the Databricks ETL pipeline using the UCI Online Retail public dataset.\n"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "net_revenue",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "kpis",
+                  "fields": [
+                    {
+                      "name": "net_revenue",
+                      "expression": "`net_revenue`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "encodings": {
+                "target": {
+                  "displayName": "Net Revenue",
+                  "fieldName": "net_revenue"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Net Revenue"
+              },
+              "version": 2,
+              "widgetType": "counter"
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "net_units",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "kpis",
+                  "fields": [
+                    {
+                      "name": "net_units",
+                      "expression": "`net_units`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "encodings": {
+                "target": {
+                  "displayName": "Net Units",
+                  "fieldName": "net_units"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Net Units"
+              },
+              "version": 2,
+              "widgetType": "counter"
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "invoice_count",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "kpis",
+                  "fields": [
+                    {
+                      "name": "invoice_count",
+                      "expression": "`invoice_count`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "encodings": {
+                "target": {
+                  "displayName": "Invoices",
+                  "fieldName": "invoice_count"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Invoices"
+              },
+              "version": 2,
+              "widgetType": "counter"
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "daily_revenue",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "daily_sales",
+                  "fields": [
+                    {
+                      "name": "event_date",
+                      "expression": "`event_date`"
+                    },
+                    {
+                      "name": "net_revenue",
+                      "expression": "`net_revenue`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "encodings": {
+                "x": {
+                  "displayName": "Event Date",
+                  "fieldName": "event_date",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "axis": {
+                    "title": "Net Revenue"
+                  },
+                  "displayName": "Net Revenue",
+                  "fieldName": "net_revenue",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Daily Net Revenue"
+              },
+              "version": 3,
+              "widgetType": "bar"
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "country_revenue",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "country_revenue",
+                  "fields": [
+                    {
+                      "name": "country",
+                      "expression": "`country`"
+                    },
+                    {
+                      "name": "net_revenue",
+                      "expression": "`net_revenue`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "encodings": {
+                "x": {
+                  "displayName": "Country",
+                  "fieldName": "country",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "axis": {
+                    "title": "Net Revenue"
+                  },
+                  "displayName": "Net Revenue",
+                  "fieldName": "net_revenue",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Revenue by Country"
+              },
+              "version": 3,
+              "widgetType": "bar"
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 4,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "top_products",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "top_products",
+                  "fields": [
+                    {
+                      "name": "product_name",
+                      "expression": "`product_name`"
+                    },
+                    {
+                      "name": "net_revenue",
+                      "expression": "`net_revenue`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "encodings": {
+                "x": {
+                  "axis": {
+                    "title": "Product"
+                  },
+                  "displayName": "Product",
+                  "fieldName": "product_name",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "axis": {
+                    "title": "Net Revenue"
+                  },
+                  "displayName": "Net Revenue",
+                  "fieldName": "net_revenue",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Top Products by Revenue"
+              },
+              "version": 3,
+              "widgetType": "bar"
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 10,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "order_status",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "order_status",
+                  "fields": [
+                    {
+                      "name": "order_status",
+                      "expression": "`order_status`"
+                    },
+                    {
+                      "name": "net_revenue",
+                      "expression": "`net_revenue`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "encodings": {
+                "x": {
+                  "displayName": "Order Status",
+                  "fieldName": "order_status",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "axis": {
+                    "title": "Net Revenue"
+                  },
+                  "displayName": "Net Revenue",
+                  "fieldName": "net_revenue",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Revenue by Order Status"
+              },
+              "version": 3,
+              "widgetType": "bar"
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 17,
+            "width": 3,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "pipeline_health",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "pipeline_health",
+                  "fields": [
+                    {
+                      "name": "pipeline_step",
+                      "expression": "`pipeline_step`"
+                    },
+                    {
+                      "name": "success_flag",
+                      "expression": "`success_flag`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "encodings": {
+                "x": {
+                  "displayName": "Pipeline Step",
+                  "fieldName": "pipeline_step",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "axis": {
+                    "title": "Success Flag"
+                  },
+                  "displayName": "Success Flag",
+                  "fieldName": "success_flag",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Pipeline Health"
+              },
+              "version": 3,
+              "widgetType": "bar"
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 17,
+            "width": 3,
+            "height": 5
+          }
+        }
+      ]
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
