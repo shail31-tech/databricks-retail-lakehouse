@@ -39,7 +39,7 @@ The ingestion layer maps these rows into order events and adds controlled duplic
 
 Current phase: **Phase 6 - GitHub Actions Orchestration**
 
-Phase 6 adds GitHub Actions workflows for CI, scheduled pipeline entry points, and manual backfill runs. Spark/Delta execution is opt-in so the default workflows stay lightweight and low-cost.
+Phase 6 adds GitHub Actions workflows for CI, scheduled pipeline entry points, manual backfill runs, and Databricks deployment. Pushes to `main` can update Databricks workspace files, serverless job definitions, and the Lakeview dashboard when Databricks secrets are configured in GitHub.
 
 ## Target Architecture
 
@@ -60,6 +60,23 @@ typed, validated, deduped current order records
         v
 Gold Delta tables
 daily sales, product performance, order status metrics, pipeline health
+```
+
+## GitHub-to-Databricks Automation
+
+The deployment workflow is:
+
+```text
+.github/workflows/deploy_databricks.yml
+```
+
+It runs tests, installs the Databricks CLI, uploads project files to Workspace Files, creates or resets Databricks jobs, and publishes the Lakeview dashboard.
+
+Required GitHub secrets:
+
+```text
+DATABRICKS_HOST
+DATABRICKS_TOKEN
 ```
 
 ## Cost Strategy

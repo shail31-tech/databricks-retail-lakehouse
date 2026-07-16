@@ -5,6 +5,7 @@ import yaml
 
 WORKFLOW_FILES = {
     "ci.yml",
+    "deploy_databricks.yml",
     "pipeline.yml",
     "backfill.yml",
 }
