@@ -22,7 +22,7 @@ jobs:
 
     env:
       DATABRICKS_AUTH_TYPE: pat
-      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_HOST: https://dbc-b6e9996e-8dc3.cloud.databricks.com
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
       DATABRICKS_WORKSPACE_ROOT: ${{ vars.DATABRICKS_WORKSPACE_ROOT || '/Users/shailus2002@gmail.com/retail-lakehouse-files' }}
       DATABRICKS_WAREHOUSE_ID: ${{ vars.DATABRICKS_WAREHOUSE_ID || '542b132076a46f4c' }}
@@ -54,7 +54,7 @@ jobs:
         shell: bash
         run: |
           if [ -z "$DATABRICKS_HOST" ] || [ -z "$DATABRICKS_TOKEN" ]; then
-            echo "DATABRICKS_HOST and DATABRICKS_TOKEN must be configured as GitHub repository secrets."
+            echo "DATABRICKS_TOKEN must be configured as a GitHub repository secret."
             exit 1
           fi
           echo "Using Databricks host: $DATABRICKS_HOST"
