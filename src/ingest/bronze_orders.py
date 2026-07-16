@@ -14,12 +14,12 @@ def create_spark(app_name: str = "retail-lakehouse-bronze") -> Any:
     return create_spark_session(app_name)
 
 
-def prepare_bronze_orders(raw_orders: Any, batch_id: str) -> Any:
+def prepare_bronze_orders(raw_orders: Any, batch_id: str, source_file: str = "unknown") -> Any:
     functions = require_pyspark_functions()
     original_columns = raw_orders.columns
     return (
         raw_orders.withColumn("raw_payload", functions.to_json(functions.struct(*[functions.col(c) for c in original_columns])))
-        .withColumn("source_file", functions.input_file_name())
+        .withColumn("source_file", functions.lit(source_file))
         .withColumn("batch_id", functions.lit(batch_id))
         .withColumn("ingested_at", functions.current_timestamp())
         .withColumn("event_date", functions.to_date("event_time"))
@@ -35,7 +35,11 @@ def ingest_bronze_orders(
 ) -> int:
     resolved_source_path = str(source_path or landing_path / "orders")
     raw_orders = spark.read.json(resolved_source_path)
-    bronze_orders = prepare_bronze_orders(raw_orders, batch_id=batch_id)
+    bronze_orders = prepare_bronze_orders(
+        raw_orders,
+        batch_id=batch_id,
+        source_file=resolved_source_path,
+    )
     output_path = delta_root / "bronze" / "orders_raw"
 
     (

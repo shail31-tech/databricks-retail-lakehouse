@@ -14,9 +14,9 @@ tables:
   pipeline_run_log: ops.pipeline_run_log
 
 local_paths:
-  source: /tmp/retail_lakehouse/source
-  landing: /tmp/retail_lakehouse/landing
-  delta_root: /tmp/retail_lakehouse/delta
+  source: /Volumes/workspace/retail_lakehouse/retail_data/source
+  landing: /Volumes/workspace/retail_lakehouse/retail_data/landing
+  delta_root: /Volumes/workspace/retail_lakehouse/retail_data/delta
 
 dataset:
   name: UCI Online Retail
