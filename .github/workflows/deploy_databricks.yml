@@ -19,7 +19,6 @@ jobs:
   deploy:
     name: Test and deploy Databricks assets
     runs-on: ubuntu-latest
-    environment: databricks
 
     env:
       DATABRICKS_AUTH_TYPE: pat
