@@ -25,29 +25,29 @@ Important entrypoints:
 
 ## Jobs
 
-Daily job:
+Daily job in the current serverless workspace:
 
 ```text
 Name: retail-lakehouse-daily
-Job ID: 278944769186859
+Job ID: 1087673142742809
 ```
 
-Backfill job:
+Backfill job in the current serverless workspace:
 
 ```text
 Name: retail-lakehouse-backfill
-Job ID: 138253664882787
+Job ID: 659734928704448
 ```
 
 ## Cost Note
 
-The jobs are created but should be run deliberately. They use a single-node job cluster definition to keep the demo small, but running a Databricks job may still consume trial/serverless/compute credits depending on the workspace plan.
+The jobs are created but should be run deliberately. This workspace supports serverless jobs, so running either job may consume serverless/trial compute credits depending on the workspace plan.
 
 ## Useful CLI Commands
 
 ```bash
 databricks current-user me --profile shailus2002
 databricks jobs list --profile shailus2002
-databricks jobs run-now 278944769186859 --profile shailus2002
-databricks jobs run-now 138253664882787 --profile shailus2002
+databricks jobs run-now 1087673142742809 --profile shailus2002-current
+databricks jobs run-now 659734928704448 --profile shailus2002-current
 ```

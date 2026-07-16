@@ -1,0 +1,57 @@
+{
+  "name": "retail-lakehouse-backfill",
+  "max_concurrent_runs": 1,
+  "parameters": [
+    {
+      "name": "start_date",
+      "default": "2010-12-01"
+    },
+    {
+      "name": "end_date",
+      "default": "2010-12-03"
+    },
+    {
+      "name": "limit_per_day",
+      "default": "1000"
+    },
+    {
+      "name": "run_prefix",
+      "default": "databricks-backfill-demo"
+    }
+  ],
+  "tasks": [
+    {
+      "task_key": "backfill_pipeline",
+      "environment_key": "default",
+      "spark_python_task": {
+        "python_file": "/Workspace/Users/shailus2002@gmail.com/retail-lakehouse-files/databricks/backfill_databricks.py",
+        "source": "WORKSPACE",
+        "parameters": [
+          "--start-date",
+          "{{job.parameters.start_date}}",
+          "--end-date",
+          "{{job.parameters.end_date}}",
+          "--limit-per-day",
+          "{{job.parameters.limit_per_day}}",
+          "--config",
+          "/Workspace/Users/shailus2002@gmail.com/retail-lakehouse-files/config/databricks.yml",
+          "--run-prefix",
+          "{{job.parameters.run_prefix}}"
+        ]
+      }
+    }
+  ],
+  "environments": [
+    {
+      "environment_key": "default",
+      "spec": {
+        "client": "2",
+        "dependencies": [
+          "pandas>=2.2.0",
+          "openpyxl>=3.1.0",
+          "pyyaml>=6.0.0"
+        ]
+      }
+    }
+  ]
+}
